@@ -31,6 +31,7 @@ import {
   Radio
 } from 'lucide-react';
 import { FastCaptcha, FastCaptchaRef } from './components/FastCaptcha/FastCaptcha.tsx';
+import { AiIntegrationHub } from './components/AiIntegrationHub.tsx';
 
 interface DualHealthData {
   rtdbStatus: string;
@@ -71,7 +72,7 @@ interface RateLimitMetrics {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'demo' | 'dualDb' | 'ddos' | 'entropy' | 'modes' | 'docs'>('demo');
+  const [activeTab, setActiveTab] = useState<'demo' | 'aiHub' | 'dualDb' | 'ddos' | 'entropy' | 'modes' | 'docs'>('demo');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [widgetSize, setWidgetSize] = useState<'normal' | 'compact'>('normal');
