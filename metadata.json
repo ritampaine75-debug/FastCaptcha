@@ -1,0 +1,6 @@
+{
+  "name": "FastCaptcha - Zero-Key Responsive Captcha Engine",
+  "description": "Ultra-responsive, zero-API-key Captcha widget with Dual Firebase RTDB/Firestore failover, inline Web Worker Proof-of-Work, behavioral entropy tracking, and in-memory DDoS protection.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
