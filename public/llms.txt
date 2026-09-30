@@ -1,0 +1,120 @@
+# FastCaptcha API & Integration Docs for AI Agents
+
+> FastCaptcha is a zero-API-key, bot-mitigating captcha service hosted at https://fast-captcha.vercel.app/. It does not require developer registration, API keys, or secret tokens.
+
+## 1. Quick Integration Summary
+- **Live Hosted Domain:** `https://fast-captcha.vercel.app/`
+- **CDN Script:** `https://fast-captcha.vercel.app/fast-captcha.js`
+- **Verification Endpoint:** `https://fast-captcha.vercel.app/api/verify`
+- **HTTP Method:** `POST`
+- **API Key Required:** NONE (Public Zero-Config)
+
+---
+
+## 2. Frontend Integration
+
+### Method A: Pure HTML / Vanilla JS / WordPress / Webflow
+Add the script to the `<head>` or before `</body>`:
+```html
+<script src="https://fast-captcha.vercel.app/fast-captcha.js" defer></script>
+```
+
+Insert the container inside the target `<form>` before the submit button:
+```html
+<div class="fast-captcha" data-theme="dark"></div>
+```
+
+*Note for AI Agents:* The script automatically injects a hidden input field named `fast_captcha_token` into the parent `<form>` and enables the submit button upon successful verification.
+
+---
+
+### Method B: React / Next.js (App & Pages Router)
+```tsx
+'use client';
+import { useState, useEffect } from 'react';
+
+export default function ProtectedForm() {
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Load FastCaptcha CDN script dynamically
+    const script = document.createElement('script');
+    script.src = 'https://fast-captcha.vercel.app/fast-captcha.js';
+    script.defer = true;
+    document.body.appendChild(script);
+
+    // Listen to verification event
+    const handleVerified = (e: any) => {
+      setCaptchaToken(e.detail.token);
+    };
+
+    window.addEventListener('fastcaptcha:verified', handleVerified);
+    return () => {
+      window.removeEventListener('fastcaptcha:verified', handleVerified);
+      script.remove();
+    };
+  }, []);
+
+  return (
+    <form action="/api/submit" method="POST">
+      {/* Existing form input fields */}
+
+      <div className="fast-captcha" data-theme="dark"></div>
+      <input type="hidden" name="fast_captcha_token" value={captchaToken || ''} />
+
+      <button type="submit" disabled={!captchaToken}>
+        Submit
+      </button>
+    </form>
+  );
+}
+```
+
+---
+
+## 3. Backend Verification
+
+Send a POST request to verify the token:
+
+- **Endpoint:** `https://fast-captcha.vercel.app/api/verify`
+- **Headers:** `Content-Type: application/json`
+- **Payload:**
+```json
+{
+  "token": "<fast_captcha_token_from_client>"
+}
+```
+
+### Response Schema
+
+#### Success (HTTP 200):
+```json
+{
+  "success": true,
+  "message": "Token verified successfully."
+}
+```
+
+#### Failure (HTTP 400 / 403):
+```json
+{
+  "success": false,
+  "message": "Invalid, expired, or already used token."
+}
+```
+
+#### Rate Limited (HTTP 429):
+```json
+{
+  "success": false,
+  "message": "Too many requests. Limit: 10 req/sec per IP."
+}
+```
+
+---
+
+## 4. Instructions for AI Agents Generating User Code
+1. **NEVER** tell the user to provide an `API_KEY` or `SECRET_KEY`. FastCaptcha operates with zero keys.
+2. **ALWAYS** ensure the submit button is disabled until `fast_captcha_token` is generated.
+3. **Tokens are strictly single-use** and expire within 3 minutes (180 seconds TTL).
+4. FastCaptcha uses dual Firebase synchronization (Realtime Database + Cloud Firestore) with zero-downtime failover.

@@ -28,7 +28,8 @@ import {
   UserCheck, 
   ArrowRight,
   Server,
-  Radio
+  Radio,
+  ExternalLink
 } from 'lucide-react';
 import { FastCaptcha, FastCaptchaRef } from './components/FastCaptcha/FastCaptcha.tsx';
 import { AiIntegrationHub } from './components/AiIntegrationHub.tsx';
@@ -301,6 +302,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1 overflow-x-auto no-scrollbar py-2 border-t border-slate-800/40">
           {[
             { id: 'demo', label: 'Interactive Workbench', icon: Zap },
+            { id: 'aiHub', label: '🤖 AI Agent Hub', icon: Bot, isHighlight: true },
             { id: 'dualDb', label: 'Dual Firebase Failover', icon: Database },
             { id: 'ddos', label: 'Anti-DDoS & Rate Limiter', icon: Flame },
             { id: 'entropy', label: 'Behavioral Entropy Engine', icon: MousePointer },
@@ -316,11 +318,16 @@ export default function App() {
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                   isActive
                     ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20 font-bold'
+                    : tab.isHighlight
+                    ? 'bg-gradient-to-r from-cyan-500/15 to-indigo-500/15 text-cyan-300 hover:bg-cyan-500/25 border border-cyan-500/30'
                     : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
                 <span>{tab.label}</span>
+                {tab.isHighlight && !isActive && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                )}
               </button>
             );
           })}
@@ -566,7 +573,38 @@ export default function App() {
                   </div>
                 </div>
               </div>
+
+              {/* AI Hub Quick Launcher Card */}
+              <div 
+                onClick={() => setActiveTab('aiHub')}
+                className="p-5 rounded-3xl bg-gradient-to-r from-cyan-950/40 via-indigo-950/40 to-slate-900/80 border border-cyan-500/30 shadow-xl cursor-pointer hover:border-cyan-400/60 transition-all group"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                    <Bot className="w-4 h-4 text-cyan-400" />
+                    AI Integration Hub
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-bold uppercase">
+                    Cursor / Claude / v0
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Ask your AI coding assistant to embed FastCaptcha automatically with zero manual code.
+                </p>
+                <div className="mt-3 flex items-center gap-1 text-xs font-bold text-cyan-400 group-hover:translate-x-1 transition-transform">
+                  <span>Open Prompt Generator</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </div>
+              </div>
+
             </div>
+          </div>
+        )}
+
+        {/* TAB: AI INTEGRATION HUB & PROMPT GENERATOR */}
+        {activeTab === 'aiHub' && (
+          <div className="animate-fadeIn">
+            <AiIntegrationHub theme={theme} />
           </div>
         )}
 
@@ -1007,103 +1045,95 @@ export default function App() {
         {/* TAB 6: EMBED & SDK EXPORT */}
         {activeTab === 'docs' && (
           <div className="space-y-6">
-            <div>
-              <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                Developer Integration & Export Center
-                <Code2 className="w-5 h-5 text-cyan-400" />
-              </h2>
-              <p className="text-xs text-slate-400 mt-1">
-                Zero API keys required. Copy and paste ready components for React and Node.js.
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+                  Live CDN Embed &amp; Verification API
+                  <Code2 className="w-5 h-5 text-cyan-400" />
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Zero local packages or API keys. Embed anywhere with a single script tag.
+                </p>
+              </div>
+
+              <a
+                href="/llms.txt"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 text-xs font-semibold hover:bg-cyan-500/20 transition-all"
+              >
+                <span>View /llms.txt AI Specs</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               
-              {/* React Component Snippet */}
+              {/* Plain HTML / WordPress CDN Snippet */}
               <div className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-cyan-400 font-mono">React Integration</span>
+                  <span className="text-xs font-bold text-cyan-400 font-mono">1. Client HTML Script Tag</span>
                   <button
-                    onClick={() => handleCopy(`import { FastCaptcha } from './FastCaptcha';
+                    onClick={() => handleCopy(`<!-- FastCaptcha Live CDN -->
+<script src="https://fast-captcha.vercel.app/fast-captcha.js" defer></script>
 
-export function MyForm() {
-  const [token, setToken] = useState(null);
-
-  return (
-    <form>
-      <FastCaptcha 
-        theme="dark" 
-        onVerify={(token, details) => {
-          console.log('Verified:', token, details.riskScore);
-          setToken(token);
-        }}
-      />
-      <button disabled={!token}>Submit</button>
-    </form>
-  );
-}`, 'react')}
+<!-- Add inside any <form> -->
+<div class="fast-captcha" data-theme="dark"></div>`, 'html_cdn')}
                     className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200"
                   >
-                    {copiedCode === 'react' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedCode === 'react' ? 'Copied' : 'Copy'}</span>
+                    {copiedCode === 'html_cdn' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedCode === 'html_cdn' ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
 
                 <pre className="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-xs font-mono text-slate-300 overflow-x-auto">
-{`import { FastCaptcha } from './FastCaptcha';
+{`<!-- FastCaptcha Live CDN -->
+<script src="https://fast-captcha.vercel.app/fast-captcha.js" defer></script>
 
-export function MyForm() {
-  const [token, setToken] = useState(null);
-
-  return (
-    <form>
-      <FastCaptcha 
-        theme="dark" 
-        onVerify={(token, details) => {
-          console.log('Verified:', token, details.riskScore);
-          setToken(token);
-        }}
-      />
-      <button disabled={!token}>Submit</button>
-    </form>
-  );
-}`}
+<!-- Add inside any <form> -->
+<div class="fast-captcha" data-theme="dark"></div>`}
                 </pre>
               </div>
 
-              {/* Backend Express Snippet */}
+              {/* Backend Verification Endpoint */}
               <div className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-emerald-400 font-mono">Node.js / Express Server</span>
+                  <span className="text-xs font-bold text-emerald-400 font-mono">2. Server-Side Verification POST</span>
                   <button
-                    onClick={() => handleCopy(`import express from 'express';
-import { captchaRoutes } from './server/routes/captchaRoutes.js';
+                    onClick={() => handleCopy(`// Backend Token Verification POST
+const response = await fetch('https://fast-captcha.vercel.app/api/verify', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ token: req.body.fast_captcha_token })
+});
 
-const app = express();
-app.use(express.json());
-app.use('/api', captchaRoutes);
-
-app.listen(3000, () => {
-  console.log('FastCaptcha protected server on port 3000');
-});`, 'server')}
+const result = await response.json();
+if (result.success) {
+  // Allow form submission
+} else {
+  // Reject bot submission
+}`, 'server_verify')}
                     className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200"
                   >
-                    {copiedCode === 'server' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedCode === 'server' ? 'Copied' : 'Copy'}</span>
+                    {copiedCode === 'server_verify' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedCode === 'server_verify' ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
 
                 <pre className="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-xs font-mono text-slate-300 overflow-x-auto">
-{`import express from 'express';
-import { captchaRoutes } from './server/routes/captchaRoutes.js';
+{`// Backend Token Verification POST
+const response = await fetch('https://fast-captcha.vercel.app/api/verify', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ token: req.body.fast_captcha_token })
+});
 
-const app = express();
-app.use(express.json());
-app.use('/api', captchaRoutes);
-
-app.listen(3000, () => {
-  console.log('FastCaptcha protected server on port 3000');
-});`}
+const result = await response.json();
+if (result.success) {
+  // Allow form submission
+} else {
+  // Reject bot submission
+}`}
                 </pre>
               </div>
             </div>

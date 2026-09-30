@@ -15,8 +15,21 @@ async function startServer() {
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: true }));
 
+  // Static public directory (CDN scripts & docs)
+  app.use(express.static(path.resolve(__dirname, 'public')));
+
   // API router
   app.use('/api', captchaRouter);
+
+  // Direct CDN script alias
+  app.get('/fast-captcha.js', (req, res) => {
+    res.sendFile(path.resolve(__dirname, 'public', 'fast-captcha.js'));
+  });
+
+  // Direct AI documentation alias
+  app.get('/llms.txt', (req, res) => {
+    res.sendFile(path.resolve(__dirname, 'public', 'llms.txt'));
+  });
 
   // Health check
   app.get('/healthz', (req, res) => {

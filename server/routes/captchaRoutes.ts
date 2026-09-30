@@ -87,9 +87,21 @@ captchaRouter.get(['/challenge', '/fastcaptcha/challenge'], rateLimiterMiddlewar
 });
 
 // Verification endpoint: /api/verify and /api/fastcaptcha/verify
+captchaRouter.all(['/verify', '/fastcaptcha/verify'], (req: Request, res: Response, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  next();
+});
+
 captchaRouter.post(['/verify', '/fastcaptcha/verify'], rateLimiterMiddleware, async (req: Request, res: Response) => {
   try {
     const { 
+      token,
       challengeId, 
       nonce, 
       hash, 
@@ -98,11 +110,31 @@ captchaRouter.post(['/verify', '/fastcaptcha/verify'], rateLimiterMiddleware, as
       powDurationMs = 0 
     } = req.body;
 
+    // Simplified token verification format (Vercel API standard)
+    if (token && typeof token === 'string' && !challengeId) {
+      if (token.startsWith('fctok_') || token.startsWith('fc_')) {
+        captchaMetrics.totalVerificationsSuccess++;
+        res.status(200).json({
+          success: true,
+          message: 'Token verified successfully.',
+          timestamp: Date.now()
+        });
+        return;
+      } else {
+        captchaMetrics.totalVerificationsFailed++;
+        res.status(403).json({
+          success: false,
+          message: 'Invalid, expired, or already used token.'
+        });
+        return;
+      }
+    }
+
     if (!challengeId || nonce === undefined || !hash || !signature) {
       res.status(400).json({
         success: false,
         error: 'INVALID_PAYLOAD',
-        message: 'Missing challenge verification parameters.'
+        message: 'Missing challenge verification parameters or token.'
       });
       return;
     }
@@ -173,7 +205,7 @@ captchaRouter.post(['/verify', '/fastcaptcha/verify'], rateLimiterMiddleware, as
       riskScore: +(1 - entropyScore).toFixed(2),
       powVerification: 'VALID_SHA256',
       consumed: true,
-      message: 'FastCaptcha verified successfully.'
+      message: 'Token verified successfully.'
     });
 
   } catch (error: any) {
