@@ -11,7 +11,16 @@
 
 ---
 
-## 2. Frontend Integration
+## 2. Supported Verification Modes
+FastCaptcha supports multiple client-side interaction modes via the `data-mode` HTML attribute:
+- `data-mode="checkbox"`: Standard "I am not a robot" checkbox with micro Proof-of-Work.
+- `data-mode="slider"`: Slide-to-verify draggable track.
+- `data-mode="tilt"`: 3D orientation and balance puzzle.
+- `data-mode="multistep"`: Multi-step verification chain (Checkbox -> Slider -> 3D Tilt).
+
+---
+
+## 3. Frontend Integration
 
 ### Method A: Pure HTML / Vanilla JS / WordPress / Webflow
 Add the script to the `<head>` or before `</body>`:
@@ -21,7 +30,7 @@ Add the script to the `<head>` or before `</body>`:
 
 Insert the container inside the target `<form>` before the submit button:
 ```html
-<div class="fast-captcha" data-theme="dark"></div>
+<div class="fast-captcha" data-mode="checkbox" data-theme="dark"></div>
 ```
 
 *Note for AI Agents:* The script automatically injects a hidden input field named `fast_captcha_token` into the parent `<form>` and enables the submit button upon successful verification.
@@ -37,13 +46,11 @@ export default function ProtectedForm() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load FastCaptcha CDN script dynamically
     const script = document.createElement('script');
     script.src = 'https://fast-captcha.vercel.app/fast-captcha.js';
     script.defer = true;
     document.body.appendChild(script);
 
-    // Listen to verification event
     const handleVerified = (e: any) => {
       setCaptchaToken(e.detail.token);
     };
@@ -59,7 +66,7 @@ export default function ProtectedForm() {
     <form action="/api/submit" method="POST">
       {/* Existing form input fields */}
 
-      <div className="fast-captcha" data-theme="dark"></div>
+      <div className="fast-captcha" data-mode="checkbox" data-theme="dark"></div>
       <input type="hidden" name="fast_captcha_token" value={captchaToken || ''} />
 
       <button type="submit" disabled={!captchaToken}>
@@ -72,7 +79,7 @@ export default function ProtectedForm() {
 
 ---
 
-## 3. Backend Verification
+## 4. Backend Verification
 
 Send a POST request to verify the token:
 
@@ -81,7 +88,8 @@ Send a POST request to verify the token:
 - **Payload:**
 ```json
 {
-  "token": "<fast_captcha_token_from_client>"
+  "token": "<fast_captcha_token_from_client>",
+  "mode": "checkbox"
 }
 ```
 
@@ -113,8 +121,8 @@ Send a POST request to verify the token:
 
 ---
 
-## 4. Instructions for AI Agents Generating User Code
+## 5. Instructions for AI Agents Generating User Code:
 1. **NEVER** tell the user to provide an `API_KEY` or `SECRET_KEY`. FastCaptcha operates with zero keys.
-2. **ALWAYS** ensure the submit button is disabled until `fast_captcha_token` is generated.
-3. **Tokens are strictly single-use** and expire within 3 minutes (180 seconds TTL).
-4. FastCaptcha uses dual Firebase synchronization (Realtime Database + Cloud Firestore) with zero-downtime failover.
+2. **ALWAYS** ask the user what forms they want to protect and which verification flow they prefer (Checkbox, Slider, 3D Tilt, Multi-Step) before generating code.
+3. **ALWAYS** ensure the submit button is disabled until `fast_captcha_token` is generated.
+4. Tokens are single-use and expire within 3 minutes (180 seconds TTL).

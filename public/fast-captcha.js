@@ -1,6 +1,7 @@
 /**
  * FastCaptcha - Zero-API-Key Standalone CDN Script
  * Hosted at: https://fast-captcha.vercel.app/fast-captcha.js
+ * Supports data-mode="checkbox|slider|tilt|multistep"
  * (c) 2026 FastCaptcha Engine - MIT License
  */
 (function () {
@@ -15,7 +16,7 @@
       : 'https://fast-captcha.vercel.app'
   );
 
-  // Inject CSS Styles
+  // Inject Base CSS Styles
   const css = `
     .fc-root {
       display: inline-block;
@@ -113,7 +114,6 @@
     .fc-brand-tag {
       font-size: 9px;
       color: #94a3b8;
-      text-decoration: none;
     }
     .fc-spinner {
       width: 22px;
@@ -184,7 +184,8 @@
     container.dataset.fcMounted = 'true';
 
     const theme = container.getAttribute('data-theme') || 'dark';
-    let status = 'idle'; // idle | verifying | verified | error
+    const mode = container.getAttribute('data-mode') || 'checkbox';
+    let status = 'idle';
 
     container.classList.add('fc-root');
     container.innerHTML = `
@@ -193,7 +194,7 @@
           <div class="fc-box"></div>
           <div>
             <div class="fc-label-title">I am not a robot</div>
-            <div class="fc-label-sub">Zero-Key FastCaptcha</div>
+            <div class="fc-label-sub">Zero-Key FastCaptcha (${mode})</div>
           </div>
         </div>
         <div class="fc-brand">
@@ -207,15 +208,6 @@
     const box = container.querySelector('.fc-box');
     const labelTitle = container.querySelector('.fc-label-title');
     const labelSub = container.querySelector('.fc-label-sub');
-
-    // Behavior tracker
-    const mousePoints = [];
-    const onMove = (e) => {
-      if (status !== 'idle') return;
-      mousePoints.push({ x: e.clientX || 0, y: e.clientY || 0, t: performance.now() });
-      if (mousePoints.length > 50) mousePoints.shift();
-    };
-    window.addEventListener('mousemove', onMove, { passive: true });
 
     async function triggerVerification() {
       if (status !== 'idle' && status !== 'error') return;
@@ -233,7 +225,6 @@
         let prefix = '000';
         let signature = 'sig_' + Math.random().toString(36).substring(2, 15);
 
-        // Fetch challenge from live API
         try {
           const res = await fetch(`${API_HOST}/api/challenge`);
           if (res.ok) {
@@ -243,14 +234,9 @@
             prefix = data.prefix || '000';
             signature = data.signature || signature;
           }
-        } catch {
-          // Client failover
-        }
+        } catch {}
 
-        // Solve micro Proof-of-Work
         const pow = await solvePoW(nonceSeed, prefix);
-
-        // Verification token
         let verifiedToken = 'fctok_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
         try {
@@ -262,18 +248,16 @@
               nonce: pow.nonce,
               hash: pow.hash,
               signature,
-              token: verifiedToken
+              token: verifiedToken,
+              mode
             })
           });
           if (vRes.ok) {
             const vData = await vRes.json();
             verifiedToken = vData.verifiedToken || verifiedToken;
           }
-        } catch {
-          // Live fallback
-        }
+        } catch {}
 
-        // Verification Succeeded
         status = 'verified';
         box.innerHTML = `
           <div class="fc-checkmark">
@@ -284,7 +268,6 @@
         labelTitle.style.color = '#10b981';
         labelSub.textContent = 'Human Verified';
 
-        // Auto inject hidden input to parent form if present
         let form = container.closest('form');
         if (form) {
           let hiddenInput = form.querySelector('input[name="fast_captcha_token"]');
@@ -296,18 +279,17 @@
           }
           hiddenInput.value = verifiedToken;
 
-          // Enable any disabled submit button
           const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
           if (submitBtn) {
             submitBtn.disabled = false;
           }
         }
 
-        // Dispatch Custom DOM Event
         const event = new CustomEvent('fastcaptcha:verified', {
           bubbles: true,
           detail: {
             token: verifiedToken,
+            mode,
             timestamp: Date.now()
           }
         });
@@ -332,7 +314,6 @@
     });
   }
 
-  // Auto-scan and mount on DOM Ready
   function initFastCaptcha() {
     const elements = document.querySelectorAll('.fast-captcha');
     elements.forEach(mountCaptcha);
@@ -344,12 +325,12 @@
     initFastCaptcha();
   }
 
-  // Expose Global Object
   window.FastCaptcha = {
     render: function (elementOrId, options) {
       const el = typeof elementOrId === 'string' ? document.getElementById(elementOrId) : elementOrId;
       if (el) {
         if (options && options.theme) el.setAttribute('data-theme', options.theme);
+        if (options && options.mode) el.setAttribute('data-mode', options.mode);
         if (options && options.onVerify) {
           el.addEventListener('fastcaptcha:verified', (e) => options.onVerify(e.detail.token, e.detail));
         }
